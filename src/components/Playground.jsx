@@ -57,7 +57,7 @@ int main() {
     setOutput('컴파일 중...');
 
     try {
-      const res = await fetch('https://api.paiza.io:8443/runners/create', {
+      const res = await fetch('/.netlify/functions/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -70,36 +70,23 @@ int main() {
 
       if (!res.ok) throw new Error('API 오류');
 
-      const { id, status } = await res.json();
+      const data = await res.json();
 
-      if (status === 'error') {
+      if (data.status === 'error') {
         setOutput('컴파일 오류가 발생했습니다.');
         setRunning(false);
         return;
       }
 
-      // Poll for result
-      let done = false;
-      for (let i = 0; i < 30 && !done; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        const detail = await fetch(`https://api.paiza.io:8443/runners/get_details?id=${id}&api_key=guest`);
-        const data = await detail.json();
-
-        if (data.status === 'completed') {
-          setOutput(data.stdout || data.stderr || '(출력 없음)');
-          if (data.stderr) setOutput(prev => prev + '\n\n[오류]\n' + data.stderr);
-          if (data.exit_code && data.exit_code !== 0) setOutput(prev => prev + `\n\n종료 코드: ${data.exit_code}`);
-          done = true;
-        } else if (data.status === 'error') {
-          setOutput('실행 중 오류가 발생했습니다.');
-          done = true;
-        } else if (data.status === 'timeout') {
-          setOutput('실행 시간이 초과되었습니다.');
-          done = true;
-        }
+      if (data.status === 'completed') {
+        setOutput(data.stdout || data.stderr || '(출력 없음)');
+        if (data.stderr) setOutput(prev => prev + '\n\n[오류]\n' + data.stderr);
+        if (data.exit_code && data.exit_code !== 0) setOutput(prev => prev + `\n\n종료 코드: ${data.exit_code}`);
+      } else if (data.status === 'timeout') {
+        setOutput('실행 시간이 초과되었습니다.');
+      } else {
+        setOutput('실행 중 오류가 발생했습니다.');
       }
-
-      if (!done) setOutput('응답 시간 초과');
     } catch (err) {
       setOutput('API 연결 실패: ' + err.message);
     } finally {
