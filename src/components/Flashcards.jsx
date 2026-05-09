@@ -7,6 +7,9 @@ export default function Flashcards({ onBack }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState(new Set());
+  const [input, setInput] = useState('');
+  const [checked, setChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
   const card = flashcards[currentIndex];
   const remaining = flashcards.length - done.size;
@@ -21,8 +24,31 @@ export default function Flashcards({ onBack }) {
 
   const actualIndex = currentCard ? flashcards.indexOf(currentCard) : -1;
 
+  const normalizeAnswer = (str) => str.toLowerCase().trim().replace(/\s+/g, ' ');
+
+  const handleCheck = () => {
+    if (!currentCard || !input.trim()) return;
+    const correct = normalizeAnswer(input) === normalizeAnswer(currentCard.back);
+    setIsCorrect(correct);
+    setChecked(true);
+  };
+
+  const handleResult = (correct) => {
+    if (!currentCard) return;
+    addFlashcardResult(currentCard.id, correct);
+    setDone(prev => new Set([...prev, currentCard.id]));
+    setFlipped(false);
+    setChecked(false);
+    setInput('');
+
+    const next = flashcards.findIndex(c => !done.has(c.id) && c.id !== currentCard.id);
+    if (next >= 0) setCurrentIndex(next);
+  };
+
   const handleNext = () => {
     if (flipped) setFlipped(false);
+    setChecked(false);
+    setInput('');
     const nextUnseen = flashcards.findIndex(c => !done.has(c.id) && c.id !== currentCard?.id);
     if (nextUnseen >= 0) setCurrentIndex(nextUnseen);
     else if (done.size === flashcards.length) return;
@@ -32,17 +58,11 @@ export default function Flashcards({ onBack }) {
     }
   };
 
-  const handleResult = (correct) => {
-    if (!currentCard) return;
-    addFlashcardResult(currentCard.id, correct);
-    setDone(prev => new Set([...prev, currentCard.id]));
-    setFlipped(false);
-
-    const next = flashcards.findIndex(c => !done.has(c.id) && c.id !== currentCard.id);
-    if (next >= 0) setCurrentIndex(next);
-  };
-
   const handleFlip = () => setFlipped(!flipped);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !checked) handleCheck();
+  };
 
   if (remaining === 0) {
     return (
@@ -71,22 +91,38 @@ export default function Flashcards({ onBack }) {
       </div>
 
       <div className="flashcard-container">
-        <div className={`flashcard ${flipped ? 'flipped' : ''}`} onClick={handleFlip}>
+        <div className={`flashcard ${flipped || checked ? 'flipped' : ''}`} onClick={!checked ? handleFlip : undefined}>
           <div className="flashcard-inner">
             <div className="flashcard-front">
               <div className="fc-label">문제</div>
               <div className="fc-text">{currentCard?.front}</div>
-              <div className="fc-hint">클릭하여 정답 확인</div>
+              <div className="fc-hint">정답을 입력하세요</div>
             </div>
             <div className="flashcard-back">
               <div className="fc-label">정답</div>
               <div className="fc-text">{currentCard?.back}</div>
-              <div className="fc-hint">얼마나 맞췄나요?</div>
+              {checked && (
+                <div className={`fc-check-result ${isCorrect ? 'correct' : 'wrong'}`}>
+                  {isCorrect ? '✅ 정답!' : '❌ 오답'}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {flipped && (
+        {!checked ? (
+          <div className="fc-input-area">
+            <input
+              type="text"
+              className="fc-input"
+              placeholder="정답을 입력하세요..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="add-btn" onClick={handleCheck}>정답 확인</button>
+          </div>
+        ) : (
           <div className="fc-actions">
             <button className="fc-btn wrong-btn" onClick={() => handleResult(false)}>
               ❌ 틀렸어요
@@ -97,7 +133,7 @@ export default function Flashcards({ onBack }) {
           </div>
         )}
 
-        {!flipped && (
+        {!checked && (
           <div className="fc-actions center">
             <button className="toolbar-btn" onClick={handleNext}>건너뛰기 →</button>
           </div>

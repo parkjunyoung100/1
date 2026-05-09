@@ -619,6 +619,39 @@ button { font-family: inherit; }
 
 .fc-actions.center { gap: 8px; }
 
+.fc-input-area {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 12px;
+}
+
+.fc-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: .95rem;
+  font-family: inherit;
+}
+
+.fc-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.fc-check-result {
+  margin-top: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.fc-check-result.correct { color: var(--success); }
+.fc-check-result.wrong { color: var(--danger); }
+
 .fc-btn {
   padding: 12px 32px;
   border: none;
