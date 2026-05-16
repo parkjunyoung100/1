@@ -24,7 +24,7 @@ export default async (req, context) => {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
-    }:ㅇ
+    }
 
     let done = false;
     let result = null;
