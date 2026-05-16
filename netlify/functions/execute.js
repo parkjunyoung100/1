@@ -6,7 +6,7 @@ export default async (req, context) => {
   try {
     const { source_code, language, input, api_key } = await req.json();
 
-    const paizaRes = await fetch('https://api.paiza.io:8443/runners/create', {
+    const paizaRes = await fetch('https://api.paiza.io:/runners/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -32,7 +32,7 @@ export default async (req, context) => {
     for (let i = 0; i < 30 && !done; i++) {
       await new Promise(r => setTimeout(r, 1000));
 
-      const detailRes = await fetch(`https://api.paiza.io:8443/runners/get_details?id=${id}&api_key=guest`);
+      const detailRes = await fetch(`https://api.paiza.io:/runners/get_details?id=${id}&api_key=guest`);
       result = await detailRes.json();
 
       if (result.status === 'completed') {
